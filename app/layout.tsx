@@ -8,13 +8,11 @@ const serif = Playfair_Display({
   variable: "--font-playfair",
   subsets: ["latin"],
   style: ["normal", "italic"],
-  weight: ["500", "600", "700"],
   display: "swap",
 });
 const sans = DM_Sans({
   variable: "--font-dmsans",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 

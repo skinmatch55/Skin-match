@@ -1,12 +1,16 @@
 {
-  "name": "app",
+  "name": "skinmatch",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:e2e": "playwright test tests/e2e.spec.ts",
+    "test:app": "APP_TESTS=1 playwright test tests/app.spec.ts",
+    "local:auth": "node scripts/local-auth.mjs",
+    "shot": "node scripts/shot.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.32.0",

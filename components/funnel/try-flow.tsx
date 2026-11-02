@@ -11,8 +11,14 @@ import { catalogById, EXAMPLE_SHELF } from "@/lib/engine/catalog";
 import type { Category, RoutineResult, SkinType } from "@/lib/engine/types";
 import type { Teaser } from "@/lib/teaser";
 import { cn } from "@/lib/utils";
-import { CheckResult } from "./check-result";
+import dynamic from "next/dynamic";
 import { itemKey, PickedChips, ProductSearch, type PickItem } from "./product-picker";
+
+// the result, sign-up, paywall and checkout code loads only once a result exists
+const CheckResult = dynamic(() => import("./check-result").then((m) => m.CheckResult), {
+  ssr: false,
+  loading: () => <div className="skeleton h-96 w-full" />,
+});
 
 type Stage = "input" | "skin" | "work" | "result";
 
@@ -97,6 +103,9 @@ export function TryFlow({
   };
 
   React.useEffect(scrollTop, [stage]);
+  React.useEffect(() => {
+    if (stage === "skin" || stage === "work") void import("./check-result");
+  }, [stage]);
 
   return (
     <div ref={rootRef} className="relative" data-stage={stage}>

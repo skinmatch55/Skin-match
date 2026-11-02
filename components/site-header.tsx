@@ -39,7 +39,7 @@ export function SiteFooter() {
           <span>© {new Date().getFullYear()} Skinmatch</span>
         </nav>
       </div>
-      <p className="mx-auto max-w-[1120px] px-4 pb-8 text-[12px] text-muted/80 md:px-6">
+      <p className="mx-auto max-w-[1120px] px-4 pb-8 text-[12px] text-muted md:px-6">
         Skinmatch gives general skincare guidance, not medical advice. For prescriptions or skin conditions, follow your dermatologist.
       </p>
     </footer>
