@@ -341,6 +341,7 @@ function Work({
   const [ready, setReady] = React.useState(false);
   const [attempt, setAttempt] = React.useState(0);
   const resultRef = React.useRef<TryResult | null>(null);
+  const reqRef = React.useRef<{ attempt: number; p: Promise<{ ok: boolean; status: number; data: TryResult & { error?: string } }> } | null>(null);
   const n = items.length;
   const pairs = Math.max(1, (n * (n - 1)) / 2);
 
@@ -351,28 +352,31 @@ function Work({
     const started = Date.now();
     const minMs = photo ? 4200 : 3400;
 
-    const run = async (retry: boolean): Promise<void> => {
+    // one request per attempt, even if React runs this effect twice (dev Strict Mode)
+    if (!reqRef.current || reqRef.current.attempt !== attempt) {
       const body = {
         deviceId: deviceId(),
         skinType: skin,
         items: items.map((i) => (i.kind === "catalog" ? { catalogId: i.product.id } : { text: i.text })),
         ...(photo ? { photo: { data: photo.data, mime: photo.mime }, thumb: photo.thumb } : {}),
       };
-      const r = await api<TryResult & { error?: string }>("/api/try", { method: "POST", body: JSON.stringify(body) });
+      const send = () => api<TryResult & { error?: string }>("/api/try", { method: "POST", body: JSON.stringify(body) });
+      const p = send().then((r) => (r.status === 0 || r.status >= 500 ? send() : r));
+      reqRef.current = { attempt, p };
+    }
+    reqRef.current.p.then((r) => {
       if (cancelled) return;
       if (r.ok && r.data.id) {
         resultRef.current = { ...r.data, thumb: photo?.thumb ?? null };
         return;
       }
       const code = r.data?.error || "default";
-      if (retry && (r.status === 0 || r.status >= 500)) return run(false);
       if (["limit", "no_products_found", "empty", "photo_unavailable"].includes(code)) {
         onBack(ERRORS[code] ?? ERRORS.default);
         return;
       }
       setFailed(ERRORS[code] ?? ERRORS.default);
-    };
-    run(true);
+    });
 
     const t = setInterval(() => {
       const el = Date.now() - started;
@@ -392,7 +396,9 @@ function Work({
   }, [attempt]);
 
   const doneRef = React.useRef(onDone);
-  doneRef.current = onDone;
+  React.useEffect(() => {
+    doneRef.current = onDone;
+  }, [onDone]);
   React.useEffect(() => {
     if (pct >= 100 && resultRef.current && !ready) {
       setReady(true);

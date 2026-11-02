@@ -12,7 +12,8 @@ export async function seedShelfFromLatestCheck(userId: string) {
     const products = (check.products as Product[]).slice(0, 40);
     for (const p of products) {
       await tx`insert into public.shelf_products (user_id, catalog_id, brand, name, category, actives)
-        values (${userId}, ${p.catalogId ?? null}, ${p.brand}, ${p.name}, ${p.category}, ${p.actives as string[]})`;
+        values (${userId}, ${p.catalogId ?? null}, ${p.brand}, ${p.name}, ${p.category}, ${p.actives as string[]})
+        on conflict do nothing`;
     }
   });
 }
@@ -66,7 +67,8 @@ export async function addToShelf(userId: string, products: Product[], max: numbe
       if (count >= max) break;
       if (rows.some((r) => (p.catalogId && r.catalog_id === p.catalogId) || r.name === p.name.toLowerCase())) continue;
       await tx`insert into public.shelf_products (user_id, catalog_id, brand, name, category, actives)
-        values (${userId}, ${p.catalogId ?? null}, ${p.brand}, ${p.name}, ${p.category}, ${p.actives as string[]})`;
+        values (${userId}, ${p.catalogId ?? null}, ${p.brand}, ${p.name}, ${p.category}, ${p.actives as string[]})
+        on conflict do nothing`;
       count++;
       added++;
     }

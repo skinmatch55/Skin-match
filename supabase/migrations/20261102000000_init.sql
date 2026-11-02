@@ -117,3 +117,6 @@ end $$;
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created after insert on auth.users
   for each row execute function public.handle_new_user();
+
+-- one row per catalog product on a shelf (no duplicates from concurrent adds)
+create unique index if not exists shelf_unique_catalog on public.shelf_products(user_id, catalog_id) where catalog_id is not null;

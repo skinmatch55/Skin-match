@@ -44,7 +44,6 @@ function slotCost(p: Product, s: Slot, skin: SkinType): number {
   let c = 0;
   const has = (k: (a: ActiveKey) => boolean) => p.actives.some(k);
   const inAM = s === "AM" || s === "BOTH";
-  const inPM = s !== "AM";
   if (has(isRetinoid) && inAM) return 1000; // retinoids: night only
   if (p.category === "mask" && inAM) return 1000;
   if (has(isAcid)) {
