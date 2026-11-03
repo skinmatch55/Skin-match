@@ -147,3 +147,10 @@ Next.js 16 (App Router, TS; `proxy.ts` instead of middleware; async cookies/para
 - Account → language: English only for now (shown, single option), as the market is the US.
 - Basic has no photo scanner: products are typed (catalog + manual actives).
 - The free try is the full engine; what's locked is the order, the fixes, the score and the rest of the conflicts.
+
+## Production (Nov 3, 2026)
+- App: https://skinmatch-5.vercel.app (Vercel project `skinmatch-5`). Kwop: connected, https://kwop.io/skinmatch-5/app redirects to it.
+- Supabase project `skinmatch-5`, ref `wmcwnnbscebwmzdrzyek`, us-east-1. Migrations in `supabase/migrations/` applied via the Management API (`/v1/projects/{ref}/database/query`).
+- Secrets live only in `.env.local` (gitignored) and Vercel env vars. GOOGLE_AUTH_ENABLED=0 until the owner sends Google OAuth client ID/secret.
+- Security: all table writes go through the server (`lib/db.ts`); signed-in users can only read/delete their own rows and edit skin_type/concerns/answers (migration `20261103000000_lock_writes.sql`).
+- The e2e test and live checks use the anonymous-try limit; clear `public.anon_tries` between repeated runs.
