@@ -131,7 +131,7 @@ Photos are never stored on the server: they're sent once to Gemini to read the l
 - After deploy: POST KWOP_API/connect {url}.
 
 ## Tech
-Next.js 16 (App Router, TS; `proxy.ts` instead of middleware; async cookies/params) + Tailwind v4 + shadcn-style components in `components/ui` + framer-motion + lucide-react. Supabase Postgres + Auth (`@supabase/ssr`). Gemini via `@google/genai` (model `gemini-2.5-flash`, override with GEMINI_MODEL). Vercel hosting.
+Next.js 16 (App Router, TS; `proxy.ts` instead of middleware; async cookies/params) + Tailwind v4 + shadcn-style components in `components/ui` + framer-motion + lucide-react. Supabase Postgres + Auth (`@supabase/ssr`). Gemini via `@google/genai` (newest Flash first: `gemini-3.8-flash`, falls back to 3.7 / 3.5 / 3 Flash when busy; override with GEMINI_MODEL). Vercel hosting.
 
 ## Local dev without Supabase cloud
 `scripts/localstack/` runs a real local stack (Postgres 16 + Supabase Auth (GoTrue) + PostgREST behind a tiny gateway on :54321) so the full funnel can be tested for real offline. `npm run localstack`.

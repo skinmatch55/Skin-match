@@ -1,0 +1,22 @@
+// Photo funnel: upload a shelf photo in the hero → scan → locked result. usage: node scripts/photo-shot.mjs <photo.jpg>
+import { chromium } from "playwright";
+const base = process.env.BASE_URL || "http://localhost:3000";
+const photo = process.argv[2];
+const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
+const page = await b.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+const errors = [];
+page.on("pageerror", (e) => errors.push(String(e)));
+await page.goto(base + "/", { waitUntil: "networkidle" });
+await page.screenshot({ path: ".shots/p0-hero.png" });
+await page.getByTestId("photo-input").setInputFiles(photo);
+await page.waitForTimeout(800);
+await page.screenshot({ path: ".shots/p1-photo.png" });
+await page.getByTestId("check-button").click();
+await page.getByTestId("skin-dry").click();
+await page.waitForTimeout(2500);
+await page.screenshot({ path: ".shots/p2-scan.png" });
+await page.getByTestId("locked-result").waitFor({ timeout: 70000 });
+await page.waitForTimeout(800);
+await page.screenshot({ path: ".shots/p3-locked.png" });
+console.log(errors.length ? errors : "clean");
+await b.close();

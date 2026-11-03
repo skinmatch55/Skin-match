@@ -2,7 +2,7 @@ import { z } from "zod";
 import { aiEnabled, lookupProduct, readLabels } from "@/lib/ai";
 import { db } from "@/lib/db";
 import { analyze } from "@/lib/engine";
-import { catalogById } from "@/lib/engine/catalog";
+import { catalogById, matchCatalog, searchCatalog } from "@/lib/engine/catalog";
 import type { Product } from "@/lib/engine/types";
 import { fail, ipHash, json } from "@/lib/http";
 import { track } from "@/lib/kwop";
@@ -68,17 +68,23 @@ export async function POST(req: Request) {
     if ("catalogId" in it) {
       const p = catalogById(it.catalogId);
       if (p) products.push(p);
-    } else unknown.push(it.text.trim());
+    } else {
+      // typed names: our catalog first (instant), the AI only for products we don't know
+      const text = it.text.trim();
+      const hit = matchCatalog("", text) ?? matchCatalog(text.split(" ")[0], text) ?? searchCatalog(text, 1)[0] ?? null;
+      if (hit && !products.some((x) => x.id === hit.id)) products.push(hit);
+      else if (!hit) unknown.push(text);
+    }
   }
   try {
-    if (body.photo) {
-      const found = await readLabels(body.photo.data, body.photo.mime);
-      for (const p of found) if (!products.some((x) => x.id === p.id)) products.push(p);
-    }
-    if (unknown.length && aiEnabled()) {
-      const found = await Promise.all(unknown.slice(0, 6).map((t) => lookupProduct(t).catch(() => null)));
-      for (const p of found) if (p && !products.some((x) => x.id === p.id)) products.push(p);
-    }
+    // photo and typed look-ups run side by side
+    const [fromPhoto, typed] = await Promise.all([
+      body.photo ? readLabels(body.photo.data, body.photo.mime) : Promise.resolve([] as Product[]),
+      unknown.length && aiEnabled()
+        ? Promise.all(unknown.slice(0, 6).map((t) => lookupProduct(t).catch(() => null)))
+        : Promise.resolve([] as (Product | null)[]),
+    ]);
+    for (const p of [...fromPhoto, ...typed]) if (p && !products.some((x) => x.id === p.id)) products.push(p);
   } catch (e) {
     console.error("[try] ai", (e as Error).message);
     return fail("ai_failed", 502);

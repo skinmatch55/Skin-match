@@ -11,7 +11,9 @@ export function aiEnabled() {
   return Boolean(process.env.GEMINI_API_KEY);
 }
 
-const MODELS = () => [process.env.GEMINI_MODEL, "gemini-flash-latest", "gemini-2.5-flash"].filter(Boolean) as string[];
+// Newest Flash first; when one is busy (503) or retired (404), the next one answers.
+const MODELS = () =>
+  [...new Set([process.env.GEMINI_MODEL, "gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.5-flash", "gemini-3-flash-preview", "gemini-flash-latest"].filter(Boolean) as string[])];
 
 const schema = {
   type: Type.OBJECT,
@@ -41,22 +43,27 @@ Active keys (only list what the product really contains as a meaningful active):
 Use the exact brand and product name as printed. Never invent products. Confidence 0..1.`;
 
 async function generate(parts: unknown[]): Promise<{ products: RawAi[] }> {
-  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY!, httpOptions: { timeout: 20_000 } });
   let lastErr: unknown;
-  for (const model of MODELS()) {
-    try {
-      const res = await ai.models.generateContent({
-        model,
-        contents: [{ role: "user", parts: parts as never }],
-        config: { responseMimeType: "application/json", responseSchema: schema, temperature: 0.1 },
-      });
-      const text = res.text ?? "";
-      return JSON.parse(text);
-    } catch (e) {
-      lastErr = e;
-      const msg = String((e as Error)?.message || e);
-      if (!/not found|404|unsupported|is not supported/i.test(msg)) break;
+  const started = Date.now();
+  // two rounds over the model list, with a short pause, but never past ~35 s (fits a 60 s function)
+  for (let round = 0; round < 2; round++) {
+    for (const model of MODELS()) {
+      if (Date.now() - started > 35_000) break;
+      try {
+        const res = await ai.models.generateContent({
+          model,
+          contents: [{ role: "user", parts: parts as never }],
+          config: { responseMimeType: "application/json", responseSchema: schema, temperature: 0.1 },
+        });
+        return JSON.parse(res.text ?? "");
+      } catch (e) {
+        lastErr = e;
+        const msg = String((e as Error)?.message || e);
+        if (!/not found|404|unsupported|is not supported|503|429|unavailable|overloaded|high demand|exhausted|deadline|timeout|abort/i.test(msg)) throw e;
+      }
     }
+    await new Promise((r) => setTimeout(r, 1200));
   }
   throw lastErr;
 }

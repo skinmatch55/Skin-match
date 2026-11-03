@@ -349,6 +349,12 @@ function Work({
   const [failed, setFailed] = React.useState<string | null>(null);
   const [ready, setReady] = React.useState(false);
   const [attempt, setAttempt] = React.useState(0);
+  const [slow, setSlow] = React.useState(false);
+  React.useEffect(() => {
+    setSlow(false);
+    const t = setTimeout(() => setSlow(true), 9000);
+    return () => clearTimeout(t);
+  }, [attempt]);
   const resultRef = React.useRef<TryResult | null>(null);
   const reqRef = React.useRef<{ attempt: number; p: Promise<{ ok: boolean; status: number; data: TryResult & { error?: string } }> } | null>(null);
   const n = items.length;
@@ -457,7 +463,11 @@ function Work({
               )}
             </AnimatePresence>
             <p className="text-[14px] text-muted">
-              {photo ? "Your photo stays private: read once, never stored." : `${n} products · ${pairs} pairs`}
+              {slow && !ready
+                ? "Reading small print takes a few more seconds. Almost there…"
+                : photo
+                  ? "Your photo stays private: read once, never stored."
+                  : `${n} products · ${pairs} pairs`}
             </p>
           </div>
         </div>

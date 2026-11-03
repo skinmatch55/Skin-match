@@ -16,8 +16,8 @@ export function ClashLink({
   const color = kind === "good" ? "var(--color-lime-deep)" : kind === "caution" ? "var(--color-amber)" : "var(--color-clash)";
   return (
     <div className={cn("flex items-center gap-0", className)}>
-      <span className="min-w-0 max-w-[42%] rounded-2xl border border-line bg-white px-3 py-1.5 text-[13px] font-medium leading-tight text-ink shadow-sm line-clamp-2">
-        {a}
+      <span className="min-w-0 max-w-[42%] rounded-2xl border border-line bg-white px-3 py-1.5 text-[13px] font-medium leading-tight text-ink shadow-sm">
+        <span className="line-clamp-2">{a}</span>
       </span>
       <span className="relative mx-1 flex min-w-8 flex-1 items-center">
         <span className="h-0 w-full border-t-2 border-dashed" style={{ borderColor: color, opacity: 0.55 }} />
@@ -31,8 +31,8 @@ export function ClashLink({
           {kind === "good" ? <Check className="h-3.5 w-3.5" strokeWidth={3} /> : <X className="h-3.5 w-3.5" strokeWidth={3} />}
         </span>
       </span>
-      <span className="min-w-0 max-w-[42%] rounded-2xl border border-line bg-white px-3 py-1.5 text-[13px] font-medium leading-tight text-ink shadow-sm line-clamp-2">
-        {b}
+      <span className="min-w-0 max-w-[42%] rounded-2xl border border-line bg-white px-3 py-1.5 text-[13px] font-medium leading-tight text-ink shadow-sm">
+        <span className="line-clamp-2">{b}</span>
       </span>
     </div>
   );
